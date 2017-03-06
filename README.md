@@ -1,4 +1,4 @@
-USGS Geomagnetism Program Interpolated Magnetic Perturbations (Geomag-IMP)
+USGS Geomagnetism Program<br/>Interpolated Magnetic Perturbations (Geomag-IMP)
 ============================================================
 
 # Background
