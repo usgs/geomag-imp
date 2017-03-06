@@ -1,12 +1,12 @@
-USGS Geomagnetic Interpolated Magnetic Perturbations (G-IMP)
+USGS Geomagnetism Program<br/>Interpolated Magnetic Perturbations (Geomag-IMP)
 ============================================================
 
 # Background
 
-G-IMP is an open-source Python library for interpolating magnetic field
+Geomag-IMP is an open-source Python library for interpolating magnetic field
 perturbations onto geographic coordinates.
 
-G-IMP provides two (for now) classes for interpolating magnetic fields:
+Geomag-IMP provides two (for now) classes for interpolating magnetic fields:
 - a thin wrapper to the Gaussian Process regressor found in Scikit-learn machine
   learning package, a kind of optimal interpolation with little to no physical
   basis.
@@ -20,7 +20,7 @@ G-IMP provides two (for now) classes for interpolating magnetic fields:
   spherical elementary current
   systems"](http://onlinelibrary.wiley.com/doi/10.1029/2001JA005085/full)).
 
-G-IMP is built on top of well-known Python scientific packages like:
+Geomag-IMP is built on top of well-known Python scientific packages like:
 [NumPy](http://www.numpy.org/), [SciPy](https://www.scipy.org/), and
 [Matplotlib](http://matplotlib.org/); as well as more focused scientific
 packages like: [ObsPy](https://github.com/obspy/obspy/wiki), the USGS's
@@ -30,7 +30,7 @@ National Laboratory)
 
 # Installation
 
-To install G-IMP, first be sure to have a modern version of Python properly
+To install Geomag-IMP, first be sure to have a modern version of Python properly
 installed on your computer. Any Python (>=2.7 & <3.0) distribution should work,
 but we only provide instructions to get this up-and-running using Miniconda from
 Continuum Analytics [http://conda.pydata.org/miniconda.html].
@@ -67,9 +67,9 @@ Continuum Analytics [http://conda.pydata.org/miniconda.html].
 
 ## Application Program Interface (API)
 
-The heart of G-IMP is a collection of Python modules that take as input a set of
-geographically located magnetic perturbations, and interpolate between them to
-arbitrary locations. For now, relevant documentation is in the source:
+The heart of Geomag-IMP is a collection of Python modules that take as input a
+set of geographically located magnetic perturbations, and interpolate between
+them to arbitrary locations. For now, relevant documentation is in the source:
 
 - [*geomag_imp*](./geomag_imp/__init__.py) - a wrapper module that provides
   access to:  
@@ -88,8 +88,8 @@ arbitrary locations. For now, relevant documentation is in the source:
 
 ## Command Line Interface (CLI)
 
-G-IMP does not provide a full-featured application, but it does provide a small
-set of useful "demonstration" scripts that might be adapted to meet relatively
+Geomag-IMP does not provide a full-featured application, but it provides a small
+set of useful "demonstration" scripts that may be adapted to for relatively
 simple operational requirements. These are:
 
 - [*make_svsqdist.py*](./bin/make_svsqdist.py) - downloads XYZF geomagnetic
