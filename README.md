@@ -7,26 +7,29 @@ Geomag-IMP is an open-source Python library for interpolating magnetic field
 perturbations onto geographic coordinates.
 
 Geomag-IMP provides two (for now) classes for interpolating magnetic fields:
+
 - a thin wrapper to the Gaussian Process regressor found in Scikit-learn machine
   learning package, a kind of optimal interpolation with little to no physical
   basis.
 - an adaptation of a technique first described by Olaf Amm and Ari Viljanen in
-  their 1999 EPS article ["Ionospheric disturbance magnetic field continuation
-  from the ground to ionosphere using spherical elementary current
-  systems"](https://www.terrapub.co.jp/journals/EPS/pdf/5106/51060431.pdf).
+  their 1999 EPS article [
+    "Ionospheric disturbance magnetic field continuation from the ground to
+    ionosphere using spherical elementary current systems"
+  ](https://www.terrapub.co.jp/journals/EPS/pdf/5106/51060431.pdf).
   The algorithm implemented here drew heavily from subsequent work by NASA's
-  Antti Pulkinnen, perhaps most significantly, the 2003 JGR article
-  ["Ionospheric equivalent current distributions determined with the method of
-  spherical elementary current
-  systems"](http://onlinelibrary.wiley.com/doi/10.1029/2001JA005085/full)).
+  Antti Pulkinnen and the Finnish Meteorological Institute's Ari Viljanen,
+  perhaps most significantly, the 2003 JGR article [
+    "Ionospheric equivalent current distributions determined with the method of 
+    spherical elementary current systems"
+  ](http://onlinelibrary.wiley.com/doi/10.1029/2001JA005085/full)).
 
 Geomag-IMP is built on top of well-known Python scientific packages like:
 [NumPy](http://www.numpy.org/), [SciPy](https://www.scipy.org/), and
 [Matplotlib](http://matplotlib.org/); as well as more focused scientific
 packages like: [ObsPy](https://github.com/obspy/obspy/wiki), the USGS's
 [Geomag-Algorithms](https://github.com/usgs/geomag-algorithms), and
-[SpacePy](https://pythonhosted.org/SpacePy/) (originally published by Los Alamos
-National Laboratory)
+[SpacePy](https://sourceforge.net/projects/spacepy/) (originally published by
+Los Alamos National Laboratory)
 
 # Installation
 
@@ -74,10 +77,15 @@ them to arbitrary locations. For now, relevant documentation is in the source:
 - [*geomag_imp*](./geomag_imp/__init__.py) - a wrapper module that provides
   access to:  
 
-  - [*geomag_imp.gpKernels*](https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/gaussian_process/kernels.py) - an alias to scikit-learn's Gaussian Process Kernel module
-  - [*geomag_imp.gpRegressor*](https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/gaussian_process/gpr.py) - an alias to scikit-learn's Gaussian Process Regressor class
+  - [*geomag_imp.gpKernels*](
+      https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/gaussian_process/kernels.py
+    ) - an alias to scikit-learn's Gaussian Process Kernel module
+  - [*geomag_imp.gpRegressor*](
+      https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/gaussian_process/gpr.py
+    ) - an alias to scikit-learn's Gaussian Process Regressor class
   - [*geomag_imp.secs*](./geomag_imp/secs.py) - object class designed to hold
-    spherical elementary current system (SECS) used to interpolate magnetic perturbations. It is analagous (but not the same as) a GP kernel.
+    spherical elementary current system (SECS) used to interpolate magnetic
+    perturbations. It is analagous (but not the same as) a GP kernel.
   - [*geomag_imp.secsRegressor*](./geomag_imp/secs.py) - object class that does
     the actual interpolation of magnetic perturbations. It optimizes the secs
     object to minimize the discrepancy between measured and secs-predicted
@@ -126,7 +134,8 @@ simple operational requirements. These are:
 
 - [*make_imp_secs.py*](./bin/make_imp_secs.py) - this reads sq and dt data
   produced by *make_svsqdist.py* for a collection of magnetic observatories,
-  combines them, then generates gridded maps of synthetic magnetic perturbations using the secsRegressor.
+  combines them, then generates gridded maps of synthetic magnetic perturbations
+  using the secsRegressor.
 
   An example call:
   ```
