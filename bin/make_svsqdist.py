@@ -34,6 +34,7 @@ NOTES:
 import numpy as np
 from glob import glob
 import sys
+import os
 
 from obspy.core import UTCDateTime,Stream,Trace,Stats
 from geomagio.edge import EdgeFactory
@@ -146,6 +147,24 @@ if __name__ == "__main__":
    #
    #
 
+   # create folders for downloads and output if they don't exist already
+   # (function catches race condition if path is created after check)
+   def mkdirp(path):
+       import os
+       try:
+           os.makedirs(path)
+       except OSError:
+           if not os.path.isdir(path):
+               raise
+
+   mkdirp(data_dir)
+   mkdirp(obs_dir)
+   mkdirp(dist_dir)
+   mkdirp(sq_dir)
+   mkdirp(sv_dir)
+   mkdirp(sd_dir)
+   mkdirp(state_dir)
+
    # IAGA observatory codes are the only allowed command-line inputs, so no
    # need for fancy argument parsing
    iagaCodes = sys.argv[1:]
@@ -225,7 +244,7 @@ if __name__ == "__main__":
                observatory = ob,
                channels = ch
             )
-            print 'Retreived from Edge: %s-%s'%(ob,ch),
+            print 'Retrieved from Edge: %s-%s'%(ob,ch),
             print 'from', in_start, 'to', in_end
          else:
             print "Non-monotonic interval requested (",
