@@ -95,12 +95,12 @@ if __name__ == "__main__":
          # attempt to read CDF file
          (
             UTs,
-            (Lat, Lon, Rad),
+            (Lats, Lons, Rads),
             Xs,
             Ys,
             Zs,
             Labels,
-            (ObsLat, ObsLon, ObsRad),
+            (ObsLats, ObsLons, ObsRads),
             ObsXs,
             ObsYs,
             ObsZs,
@@ -112,12 +112,12 @@ if __name__ == "__main__":
             # attempt to read JSON file
             (
                UTs,
-               (Lat, Lon, Rad),
+               (Lats, Lons, Rads),
                Xs,
                Ys,
                Zs,
                Labels,
-               (ObsLat, ObsLon, ObsRad),
+               (ObsLats, ObsLons, ObsRads),
                ObsXs,
                ObsYs,
                ObsZs,
@@ -129,12 +129,12 @@ if __name__ == "__main__":
                # attempt to read in Antti Pulkkinen ASCII data
                (
                   UTs,
-                  (Lat, Lon, Rad),
+                  (Lats, Lons, Rads),
                   Xs,
                   Ys,
                   Zs,
                   Labels,
-                  (ObsLat, ObsLon, ObsRad),
+                  (ObsLats, ObsLons, ObsRads),
                   ObsXs,
                   ObsYs,
                   ObsZs,
@@ -163,39 +163,39 @@ if __name__ == "__main__":
       ObsMs = [np.clip(np.log10(M), 0, np.Inf) for M in ObsMs]
 
 
+      # roughly keep default size, but force new aspect ratio to match map
+      w,h = plt.figaspect(float(mapH)/float(mapW))
+      plt.figure(figsize = (w,h))
 
       # create a basemap
       bm = Basemap(width = mapW, height = mapH,
                    resolution = 'l', projection = 'laea',
                    lat_ts = lat_ts, lat_0 = lat_0, lon_0 = lon_0)
+      bm.drawcoastlines()
+      bm.fillcontinents(color = land_color, lake_color = water_color)
+      # maybe parallels and meridians should be configurable (?)
+      bm.drawparallels(np.arange(-80.,81.,20.), labels = [1,1,0,0])
+      bm.drawmeridians(np.arange(-180.,181.,20.), labels = [0,0,0,1])
+      bm.drawmapboundary(fill_color = water_color)
 
-      # roughly keep default size, but force new aspect ratio to match map
-      w,h = plt.figaspect(float(mapH)/float(mapW))
-      plt.figure(figsize = (w,h))
 
       for i,ut in enumerate(UTs):
 
          print 'Plotting '+ut.isoformat()
          sys.stdout.flush()
 
-         bm.drawcoastlines()
-         bm.fillcontinents(color = land_color, lake_color = water_color)
-         # maybe parallels and meridians should be configurable (?)
-         bm.drawparallels(np.arange(-80.,81.,20.), labels = [1,1,0,0])
-         bm.drawmeridians(np.arange(-180.,181.,20.), labels = [0,0,0,1])
-         bm.drawmapboundary(fill_color = water_color)
 
          if nx==None and ny==None:
             # vectors remain on input grid
             u,v,x,y = bm.rotate_vector(Ys[i] * Ms[i], Xs[i] * Ms[i],
-                                       Lon, Lat,
+                                       Lons, Lats,
                                        returnxy = True)
          else:
             # Basemap.transform_vector() does not generate results consistent
             # with Basemap.rotate_vector(). We re-implment transform_vector()
             # here, but call a different 2d interpolator.
             uin,vin,xin,yin = bm.rotate_vector(Ys[i] * Ms[i], Xs[i] * Ms[i],
-                                               Lon, Lat,
+                                               Lons, Lats,
                                                returnxy = True)
             longs, lats, x, y = bm.makegrid(nx, ny, returnxy = True)
 
@@ -205,54 +205,73 @@ if __name__ == "__main__":
             v = sInterp.griddata((xin.flatten(), yin.flatten()), vin.flatten(),
                                  (x, y), method = 'linear')
 
-         # plot vector field
-         q = bm.quiver(x, y, u, v, 10 ** np.sqrt(u**2 + v**2),
-                       scale = arrow_scale,
-                       width = arrow_width,
-                       clim = [1,1000],
-                       zorder = 10)
+         if i == 0:
 
-         # NOTE: the following seems broken in MPL-1.4.2, but fixed by MPL-1.4.3
-         plt.quiverkey(q, .09, .98, 3,
-                       ('%4.0f '+'%s') % (10**3, 'nT'),
-                       coordinates='axes', labelpos='W',
-                       color=q.get_cmap()((10.**3 - q.get_clim()[0]) /
-                                          np.float(q.get_clim()[1] - q.get_clim()[0]) ),
-                       fontproperties={'size':10})
-         plt.quiverkey(q, .09, .95, 2,
-                       ('%4.0f '+'%s') % (10**2, 'nT'),
-                       coordinates='axes', labelpos='W',
-                       color=q.get_cmap()((10**2 - q.get_clim()[0]) /
-                                          np.float(q.get_clim()[1] - q.get_clim()[0]) ),
-                       fontproperties={'size':10})
-         plt.quiverkey(q, .09, .92, 1,
-                       ('%4.0f '+'%s') % (10**1, 'nT'),
-                       coordinates='axes', labelpos='W',
-                       color=q.get_cmap()((10**1 - q.get_clim()[0]) /
-                                          np.float(q.get_clim()[1] - q.get_clim()[0]) ),
-                       fontproperties={'size':10})
+             # plot vector field
+             q_pred = bm.quiver(x, y, u, v, 10 ** np.sqrt(u**2 + v**2),
+                           scale = arrow_scale,
+                           width = arrow_width,
+                           clim = [1,1000],
+                           zorder = 10)
 
-         # place green dots at observatory locations included in this map solution
-         bm.scatter(ObsLon[ObsFits[i].astype(bool)],
-                    ObsLat[ObsFits[i].astype(bool)],
-                    latlon=True, zorder=10, color='green', s=50, alpha=0.75)
+             # NOTE: the following seems broken in MPL-1.4.2, but fixed by MPL-1.4.3
+             plt.quiverkey(q_pred, .09, .98, 3,
+                           ('%4.0f '+'%s') % (10**3, 'nT'),
+                           coordinates='axes', labelpos='W',
+                           color=q_pred.get_cmap()((10.**3 - q_pred.get_clim()[0]) /
+                                              np.float(q_pred.get_clim()[1] - q_pred.get_clim()[0]) ),
+                           fontproperties={'size':10})
+             plt.quiverkey(q_pred, .09, .95, 2,
+                           ('%4.0f '+'%s') % (10**2, 'nT'),
+                           coordinates='axes', labelpos='W',
+                           color=q_pred.get_cmap()((10**2 - q_pred.get_clim()[0]) /
+                                              np.float(q_pred.get_clim()[1] - q_pred.get_clim()[0]) ),
+                           fontproperties={'size':10})
+             plt.quiverkey(q_pred, .09, .92, 1,
+                           ('%4.0f '+'%s') % (10**1, 'nT'),
+                           coordinates='axes', labelpos='W',
+                           color=q_pred.get_cmap()((10**1 - q_pred.get_clim()[0]) /
+                                              np.float(q_pred.get_clim()[1] - q_pred.get_clim()[0]) ),
+                           fontproperties={'size':10})
 
-         # place red dots at observatory locations NOT included in this map solution
-         bm.scatter(ObsLon[~ObsFits[i].astype(bool)],
-                    ObsLat[~ObsFits[i].astype(bool)],
-                    latlon=True, zorder=10, color='red', s=50, alpha=0.75)
+             # place green dots at observatory locations included in this map solution
+             s_avail = bm.scatter(ObsLons[ObsFits[i].astype(bool)],
+                        ObsLats[ObsFits[i].astype(bool)],
+                        latlon=True, zorder=10, color='green', s=50, alpha=0.75)
+
+             # place red dots at observatory locations NOT included in this map solution
+             s_miss = bm.scatter(ObsLons[~ObsFits[i].astype(bool)],
+                        ObsLats[~ObsFits[i].astype(bool)],
+                        latlon=True, zorder=10, color='red', s=50, alpha=0.75)
 
 
 
-         # place observation vectors over top green dots
-         u,v,x,y = bm.rotate_vector(ObsYs[i] * ObsMs[i], ObsXs[i] * ObsMs[i],
-                                    ObsLon, ObsLat,
-                                    returnxy = True)
-         bm.quiver(x, y, u, v, 10 ** np.sqrt(u**2 + v**2),
-                       scale = arrow_scale,
-                       width = arrow_width,
-                       clim = [1,1000],
-                       zorder = 10)
+             # place observation vectors over top green dots
+             u,v,x,y = bm.rotate_vector(ObsYs[i] * ObsMs[i], ObsXs[i] * ObsMs[i],
+                                        ObsLons, ObsLats,
+                                        returnxy = True)
+             q_obs = bm.quiver(x, y, u, v, 10 ** np.sqrt(u**2 + v**2),
+                               scale = arrow_scale,
+                               width = arrow_width,
+                               clim = [1,1000],
+                               zorder = 10)
+
+         else:
+             # change only the predicted vector data, don't update plot elements
+             q_pred.set_UVC(u, v, 10 ** np.sqrt(u**2 + v**2))
+
+             # change only the offsets, after transforming to the map projection
+             x,y = bm(ObsLons, ObsLats)
+             s_avail.set_offsets(zip(x[ObsFits[i].astype(bool)],
+                                     y[ObsFits[i].astype(bool)]))
+             s_miss.set_offsets(zip(x[~ObsFits[i].astype(bool)],
+                                    y[~ObsFits[i].astype(bool)]))
+
+             # place observation vectors over top green dots
+             u,v,x,y = bm.rotate_vector(ObsYs[i] * ObsMs[i], ObsXs[i] * ObsMs[i],
+                                        ObsLons, ObsLats,
+                                        returnxy = True)
+             q_obs.set_UVC(u, v, 10 ** np.sqrt(u**2 + v**2))
 
 
          # labels
@@ -269,5 +288,3 @@ if __name__ == "__main__":
             # if plot_dir didn't exist, create and try again
             os.mkdir(plot_dir)
             plt.savefig(plotFilename, dpi=150)
-
-         plt.clf()
