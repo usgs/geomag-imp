@@ -220,19 +220,19 @@ if __name__ == "__main__":
                            coordinates='axes', labelpos='W',
                            color=q_pred.get_cmap()((10.**3 - q_pred.get_clim()[0]) /
                                               np.float(q_pred.get_clim()[1] - q_pred.get_clim()[0]) ),
-                           fontproperties={'size':10})
+                           fontproperties={'size':8})
              plt.quiverkey(q_pred, .09, .95, 2,
                            ('%4.0f '+'%s') % (10**2, 'nT'),
                            coordinates='axes', labelpos='W',
                            color=q_pred.get_cmap()((10**2 - q_pred.get_clim()[0]) /
                                               np.float(q_pred.get_clim()[1] - q_pred.get_clim()[0]) ),
-                           fontproperties={'size':10})
+                           fontproperties={'size':8})
              plt.quiverkey(q_pred, .09, .92, 1,
                            ('%4.0f '+'%s') % (10**1, 'nT'),
                            coordinates='axes', labelpos='W',
                            color=q_pred.get_cmap()((10**1 - q_pred.get_clim()[0]) /
                                               np.float(q_pred.get_clim()[1] - q_pred.get_clim()[0]) ),
-                           fontproperties={'size':10})
+                           fontproperties={'size':8})
 
              # place green dots at observatory locations included in this map solution
              s_avail = bm.scatter(ObsLons[ObsFits[i].astype(bool)],
@@ -262,10 +262,9 @@ if __name__ == "__main__":
 
              # change only the offsets, after transforming to the map projection
              x,y = bm(ObsLons, ObsLats)
-             s_avail.set_offsets(zip(x[ObsFits[i].astype(bool)],
-                                     y[ObsFits[i].astype(bool)]))
-             s_miss.set_offsets(zip(x[~ObsFits[i].astype(bool)],
-                                    y[~ObsFits[i].astype(bool)]))
+
+             s_avail.set_offsets(np.array(zip(x,y))[ObsFits[i].astype(bool)])
+             s_miss.set_offsets(np.array(zip(x,y))[~ObsFits[i].astype(bool)])
 
              # place observation vectors over top green dots
              u,v,x,y = bm.rotate_vector(ObsYs[i] * ObsMs[i], ObsXs[i] * ObsMs[i],
