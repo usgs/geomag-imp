@@ -7,10 +7,10 @@
  Elevation              197                                          |
  Reported               XdtYdtZdtFdt                                 |
  Sensor Orientation     HDZF                                         |
- Digital Sampling       100.0 second                                 |
+ Digital Sampling       0.01 second                                  |
  Data Interval Type     filtered 1-minute (00:15-01:45)              |
  Data Type              variation                                    |
- # DECBAS               16876   (Baseline declination value in       |
+ # DECBAS               12151   (Baseline declination value in       |
  # tenths of minutes East (0-216,000)).                              |
  # CONDITIONS OF USE: The Conditions of Use for data provided        |
  # through INTERMAGNET and acknowledgement templates can be found at |
