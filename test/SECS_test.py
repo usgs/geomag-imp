@@ -23,7 +23,7 @@ def test_secs_construct():
    lats = np.array([90])
    lons = np.array([0])
    rads = np.array([6378000 + 100000])
-   secs_llr = np.array(zip(lats, lons, rads))
+   secs_llr = np.array(list(zip(lats, lons, rads)))
 
    # initialize secs object
    sec1 = secs(secs_llr, amps=None, amps_var=None)
@@ -43,7 +43,7 @@ def test_regress_construct():
    lats = np.array([90])
    lons = np.array([0])
    rads = np.array([6378000 + 100000])
-   secs_llr = np.array(zip(lats, lons, rads))
+   secs_llr = np.array(list(zip(lats, lons, rads)))
 
    # initialize secs object
    sec1 = secs(secs_llr, amps=None, amps_var=None)
@@ -67,7 +67,7 @@ def test_predict_sec_above():
    lats = np.array([90])
    lons = np.array([0])
    rads = np.array([6378000. + 100000.])
-   secs_llr = np.array(zip(lats, lons, rads))
+   secs_llr = np.array(list(zip(lats, lons, rads)))
 
    # initialize secs object
    sec_above = secs(secs_llr, amps=None, amps_var=None)
@@ -80,7 +80,7 @@ def test_predict_sec_above():
    latp = np.array([0,90])
    lonp = np.array([0,0])
    radp = np.array([6378000., 6378000.])
-   pred_llr = np.array(zip(latp, lonp, radp))
+   pred_llr = np.array(list(zip(latp, lonp, radp)))
 
    # set SEC amplitude to 10,000 Amps, and make prediction
    amps = 1e4
@@ -114,7 +114,7 @@ def test_predict_sec_below():
    lats = np.array([90])
    lons = np.array([0])
    rads = np.array([6378000. - 100000.])
-   secs_llr = np.array(zip(lats, lons, rads))
+   secs_llr = np.array(list(zip(lats, lons, rads)))
 
    # initialize secs object
    sec_below = secs(secs_llr, amps=None, amps_var=None)
@@ -127,7 +127,7 @@ def test_predict_sec_below():
    latp = np.array([0,90])
    lonp = np.array([0,0])
    radp = np.array([6378000., 6378000.])
-   pred_llr = np.array(zip(latp, lonp, radp))
+   pred_llr = np.array(list(zip(latp, lonp, radp)))
 
    # set SEC amplitude to 10,000 Amps, and make prediction
    amps = 1e4
@@ -160,7 +160,7 @@ def test_predict_sec_above_below():
    lats = np.array([90, 90])
    lons = np.array([0, 0])
    rads = np.array([6378000. + 100000., 6378000. - 100000.])
-   secs_llr = np.array(zip(lats, lons, rads))
+   secs_llr = np.array(list(zip(lats, lons, rads)))
 
    # initialize secs object
    sec_above_below = secs(secs_llr, amps=None, amps_var=None)
@@ -173,7 +173,7 @@ def test_predict_sec_above_below():
    latp = np.array([0,90])
    lonp = np.array([0,0])
    radp = np.array([6378000., 6378000.])
-   pred_llr = np.array(zip(latp, lonp, radp))
+   pred_llr = np.array(list(zip(latp, lonp, radp)))
 
    # set SEC amplitude to 10,000 Amps, and make prediction
    amps = np.array([1e4,-1e4])
@@ -217,7 +217,7 @@ def test_fit_sec_above_below():
    lats = np.array([90, 90])
    lons = np.array([0, 0])
    rads = np.array([6378000. + 100000., 6378000. - 100000.])
-   secs_llr = np.array(zip(lats, lons, rads))
+   secs_llr = np.array(list(zip(lats, lons, rads)))
 
    # initialize secs object
    sec_above_below = secs(secs_llr, amps=None, amps_var=None)
@@ -230,7 +230,7 @@ def test_fit_sec_above_below():
    latp = np.linspace(90,0,901)
    lonp = np.zeros(latp.shape)
    radp = np.zeros(latp.shape) + 6378000.
-   pred_llr = np.array(zip(latp, lonp, radp))
+   pred_llr = np.array(list(zip(latp, lonp, radp)))
 
    # set SEC amplitude to 10,000 Amps, and make prediction
    amps = np.array([1e4,-1e4])

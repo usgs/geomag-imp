@@ -22,7 +22,8 @@ NOTES:
 # required imports
 import numpy as np
 import pkgutil
-from StringIO import StringIO
+import io
+#from StringIO import StringIO # not in Py3...io.BytesIO is preferred fix below
 import gzip
 import zipfile
 import tempfile
@@ -34,11 +35,13 @@ import datetime as dt
 
 
 # issue warnings if these are not available, but don't fail immediately
-if pkgutil.find_loader('spacepy.pycdf') is None:
+if pkgutil.find_loader('spacepy') is None or \
+        pkgutil.find_loader('spacepy.pycdf') is None:
    print ("spacepy.pycdf package not available; " +
           "cannot import/export CDF files")
 else:
    from spacepy import pycdf
+
 
 if pkgutil.find_loader('json_tricks') is None:
    print ("JSON Tricks package not available; " +
@@ -76,8 +79,8 @@ def read_imp_JSON(filename):
                   (ObsLat, ObsLon, ObsRad), ObsX, ObsY, ObsZ, ObsFit, ObsName)
 
 
-def write_imp_CDF(Epoch, (Latitude, Longitude, Radius), X, Y, Z, Label,
-                  (ObsLat, ObsLon, ObsRad), ObsX, ObsY, ObsZ, ObsFit, ObsName,
+def write_imp_CDF(Epoch, lat_lon_r, X, Y, Z, Label,
+                  olat_olon_or, ObsX, ObsY, ObsZ, ObsFit, ObsName,
                   filename='impOut.json'):
 # def write_imp_json(Epoch, (Latitude, Longitude), X, Y, Z, Label,
 #                            (ObsLat, ObsLon), ObsFit, ObsName,
@@ -89,6 +92,11 @@ def write_imp_CDF(Epoch, (Latitude, Longitude, Radius), X, Y, Z, Label,
    TODO: figure out how to store metadata...really, need to figure out a
          imp metadata standard and use it for all inputs and outputs.
    """
+
+   # unpack former tuple arguments (see PEP-3113)
+   Latitude, Longitud, Radius = lat_lon_r
+   ObsLat, ObsLon, ObsRad = olat_olon_or
+
    data = {}
 
    data['Epoch'] = (Epoch)
@@ -143,8 +151,8 @@ def read_imp_CDF(filename):
                   (ObsLat, ObsLon, ObsRad), ObsX, ObsY, ObsZ, ObsFit, ObsName)
 
 
-def write_imp_CDF(Epoch, (Latitude, Longitude, Radius), X, Y, Z, Label,
-                  (ObsLat, ObsLon, ObsRad), ObsX, ObsY, ObsZ, ObsFit, ObsName,
+def write_imp_CDF(Epoch, lat_lon_r, X, Y, Z, Label,
+                  olat_olon_or, ObsX, ObsY, ObsZ, ObsFit, ObsName,
                   filename='impOut.cdf'):
    """Write imp files
    Write gridded interpolated magnetic perturbations (IMPs) to a nominally
@@ -152,6 +160,10 @@ def write_imp_CDF(Epoch, (Latitude, Longitude, Radius), X, Y, Z, Label,
 
    TODO: make Obs* optional
    """
+   # unpack former tuple arguments (see PEP-3113)
+   Latitude, Longitud, Radius = lat_lon_r
+   ObsLat, ObsLon, ObsRad = olat_olon_or
+
    # create a new CDF file object
    try:
       cdf = pycdf.CDF(filename, '')
@@ -222,7 +234,7 @@ def write_imp_CDF(Epoch, (Latitude, Longitude, Radius), X, Y, Z, Label,
    cdf['Epoch'].attrs['TIME_BASE'] = "0 AD"
    cdf['Epoch'].attrs['UNITS'] = "ms"
    cdf['Epoch'].attrs['VALIDMAX'] = dt.datetime(202,12,31,23,59,59,999999)
-   cdf['Epoch'].attrs['VALIDMIN'] = dt.datetime(1990,01,01,0,0,0,0)
+   cdf['Epoch'].attrs['VALIDMIN'] = dt.datetime(1990,1,1,0,0,0,0)
    cdf['Epoch'].attrs['VAR_TYPE'] = "support_data"
 
 
@@ -510,8 +522,8 @@ def read_imp_ASCII(filename):
                (obsLat, obsLon, obsRad), obsX, obsY, obsZ, obsInc, obsID)
 
 
-def write_imp_ASCII(DT, (Lat, Lon, Rad), BX, BY, BZ, Label,
-                    (obsLat, obsLon, obsRad), obsX, obsY, obsZ, obsInc, obsID,
+def write_imp_ASCII(DT, lat_lon_r, BX, BY, BZ, Label,
+                    olat_olon_or, obsX, obsY, obsZ, obsInc, obsID,
                     filename='impOut.zip'):
 
 # def write_antti(DT, Lat, Lon, BX, BY, BZ, Label,
@@ -525,6 +537,10 @@ def write_imp_ASCII(DT, (Lat, Lon, Rad), BX, BY, BZ, Label,
    """
    Write Antti Pulkinnen's multi-file (ASCII) data to a zipfile.
    """
+
+   # unpack former tuple arguments (see PEP-3113)
+   Latitude, Longitud, Radius = lat_lon_r
+   ObsLat, ObsLon, ObsRad = olat_olon_or
 
    # create a temporary directory
    tmpDir = tempfile.mkdtemp()
@@ -572,13 +588,13 @@ def _read_antti_datetime(dt_file):
    Read datetimes from Antti Pulkinnen's DateTime.txt[.gz] file
    """
    # NOTE: genfromtxt() doesn't work with gzipped files as it should, so we
-   #       unzip the file ourself, and use StringIO to fake out genfromtext()
+   #       unzip the file ourself, and use io.BytesIO to fake out genfromtext()
    if dt_file.split('.')[-1] == 'gz':
       ff = gzip.open(dt_file, 'r')
    else:
       ff = open(dt_file, 'r')
 
-   sIO = StringIO(ff.read())
+   sIO = io.BytesIO(ff.read())
    ff.close()
 
    ymdHMS = np.genfromtxt(sIO, comments="%")
@@ -628,13 +644,13 @@ def _read_antti_component(component_file):
    Read vector component from Antti Pulkinnen's [BX|BY|BZ].txt[.gz] file
    """
    # NOTE: genfromtxt() doesn't work with gzipped files as it should, so we
-   #       unzip the file ourself, and use StringIO to fake out genfromtext()
+   #       unzip the file ourself, and use io.BytesIO to fake out genfromtext()
    if component_file.split('.')[-1] == 'gz':
       ff = gzip.open(component_file, 'r')
    else:
       ff = open(component_file, 'r')
 
-   sIO = StringIO(ff.read())
+   sIO = io.BytesIO(ff.read())
    ff.close()
 
    # read array
@@ -687,13 +703,13 @@ def _read_antti_location(location_file):
    latlon.txt[.gz] file
    """
    # NOTE: genfromtxt() doesn't work with gzipped files as it should, so we
-   #       unzip the file ourself, and use StringIO to fake out genfromtext()
+   #       unzip the file ourself, and use io.BytesIO to fake out genfromtext()
    if location_file.split('.')[-1] == 'gz':
       ff = gzip.open(location_file, 'r')
    else:
       ff = open(location_file, 'r')
 
-   sIO = StringIO(ff.read())
+   sIO = io.BytesIO(ff.read())
    ff.close()
 
    # read LatLon array (with optional labels...
@@ -767,7 +783,7 @@ def _read_antti_stations(station_file):
    else:
       ff = open(station_file, 'r')
 
-   sIO = StringIO(ff.read())
+   sIO = io.BytesIO(ff.read())
    ff.close()
 
    # extract and convert single line with observatory IDs
