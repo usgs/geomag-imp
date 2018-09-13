@@ -31,6 +31,7 @@ This script does NOT:
 NOTES:
 
 """
+from __future__ import print_function
 import numpy as np
 from glob import glob
 import sys
@@ -136,10 +137,10 @@ if __name__ == "__main__":
    # if custom interval is required, modify the following lines to override the
    # realtime interval calcualted from min_obs_age and every_nth_sec, otherwise
    # set starttime and endtime equal to None
-   starttime = UTCDateTime(2017,1,1,0,0,0)
-   endtime = UTCDateTime(2017,1,1,1,0,0)
-   # starttime = None
-   # endtime = None
+   #starttime = UTCDateTime(2018,8,1,0,0,0)
+   #endtime = UTCDateTime(2018,8,1,1,0,0)
+   starttime = None
+   endtime = None
 
    #
    #
@@ -176,7 +177,7 @@ if __name__ == "__main__":
    now = UTCDateTime.now() - min_obs_age
    nsec = now.hour*3600 + now.minute*60 + now.second + now.microsecond*1e-6
    delta = (nsec // every_nth_sec) * every_nth_sec - nsec
-   out_end = now + delta
+   end_now = now + delta
 
    # loop over iagaCodes to process each observatory
    for ob in iagaCodes:
@@ -211,26 +212,26 @@ if __name__ == "__main__":
          svsqdist[ch].load_state()
 
          # set out_start to the next_starttime if it exists
-         if svsqdist[ch].next_starttime is not None:
+         out_start = end_now
+         out_end = end_now
+         if (svsqdist[ch].next_starttime is not None and
+             starttime is None and endtime is None):
             out_start = svsqdist[ch].next_starttime
          else:
-            out_start = out_end
-            # override with custom starttime and endtime
-            if (starttime is not None and endtime is not None):
+            if starttime is not None:
                out_start = starttime
-               out_end = endtime
-            elif starttime is not None:
-               out_start = starttime
+            if endtime is not None:
+                out_end = endtime
 
-         # possibly re-initialize with previous 90 days of data
-         in_start, in_end = svsqdist[ch].get_input_interval(
-            out_start,
-            out_end,
-            observatory = ob,
-            channels = ch
-         )
+         if out_start <= out_end:
+            # possibly re-initialize with previous 90 days of data
+            in_start, in_end = svsqdist[ch].get_input_interval(
+               out_start,
+               out_end,
+               observatory = ob,
+               channels = ch
+            )
 
-         if in_start <= in_end:
             # create factory and pull data from USGS Edge
             in_factory = EdgeFactory(
                host = edge_url,
@@ -244,17 +245,17 @@ if __name__ == "__main__":
                observatory = ob,
                channels = ch
             )
-            print 'Retrieved from Edge: %s-%s'%(ob,ch),
-            print 'from', in_start, 'to', in_end
+            print('Retrieved from Edge: %s-%s'%(ob,ch), end="")
+            print(' from', in_start, 'to', in_end)
          else:
-            print "Non-monotonic interval requested (",
-            print in_start, 'to', in_end, ")",
-            print "skipping %s-%s..."%(ob,ch)
+            print("Decreasing interval requested (", end="")
+            print(out_start, 'to', out_end, ")", end="")
+            print(" skipping %s-%s..."%(ob,ch))
 
 
       if in_stream.count() is not len(channels):
          # if any channel was not read in, STOP PROCESSING
-         print "No inputs processed or written..."
+         print("No inputs processed or written...")
          pass
 
       else:
