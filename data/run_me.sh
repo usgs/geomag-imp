@@ -23,4 +23,4 @@ python ../bin/make_svsqdist.py BOU BRW BSL CMO DED FRD FRN GUA HON NEW SHU SJG T
 python ../bin/make_imp_secs.py BOU BRW BSL CMO DED FRD FRN GUA HON NEW SHU SJG TUC
 
 # 3) generate diagnostic plots of North America magnetic disturbance
-python ../bin/make_impmaps.py *.zip
+python ../bin/make_impmaps.py `ls -tr *.zip | tail -1`
