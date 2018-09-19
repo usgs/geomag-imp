@@ -30,35 +30,43 @@ packages like: [ObsPy][6], the USGS's [Geomag-Algorithms][7], and [SpacePy][8]
 To install Geomag-IMP, first be sure to have a modern version of Python properly
 installed on your computer. Any Python distribution should work, but we only
 provide instructions to get this up-and-running using Miniconda from
-Continuum Analytics [http://conda.pydata.org/miniconda.html].
+Continuum Analytics (http://conda.pydata.org/miniconda.html).
 
-1. install **miniconda** distribution for your operating system;
+1. install **Miniconda** distribution for your operating system, and set up a
+   pristine Conda environment using (mostly) the conda-forge channel:
+  - conda config --add channels conda-forge
+  - conda create -n G-IMP_env python
+  - conda activate G-IMP_env
 2. install most Python packages (and dependencies) using `conda` command:  
-   (these all require a command line; i.e., a **Terminal** in OsX, an **Xterm**    
-    in Linux, or the **Anaconda Prompt** in Windows)
-  - `conda config --append channels conda-forge`
-  - `conda install obspy` (installs many other dependencies)
-  - `conda install pycurl` (required for geomag-algorithms)
-  - `conda install scikit-learn` (required for Gaussian Process Regression)
-  - `conda install basemap` (required for diagnostic plots)
-  - `conda install jupyter` (required to run Notebooks)
-  - `conda install json_tricks` (portable alternative to CDF...see below)
-3. install Python packages not recognized by `conda` using `pip`:
-  - `pip install ???` (currently none)
-4. install Python packages directly from GitHub using pip+git:
-  - if Windows, git needs to be installed [https://git-for-windows.github.io/]  
-    (may need to restart the Anaconda prompt to update path to find git)
-  - `pip install git+https://github.com/usgs/geomag-algorithms.git`
-5. install geomag-imp using the setup.py file in the top folder of this package:
+   (`--override-channels` option forces conda to only install from specified
+    channel(s); this works around a problem is not-very-older conda versions);
+    some packages must use `pip`
+  - Minimum requirements:
+    - `conda install --override-channels -c conda-forge obspy` (includes many
+      other dependencies)
+    - `conda install --no-deps pycurl libcurl libssh2` (required for
+      geomag-algorithms; not in conda-forge)
+    - `conda install --override-channels -c conda-forge scikit-learn` (required
+      for Gaussian Process Regression)
+    - `conda install --override-channels -c conda-forge basemap` (required for
+      diagnostic plots)
+    - `pip install git+https://github.com/usgs/geomag-algorithms.git` (required
+       for working with USGS geomagnetic data and services)
+  - Extras:
+    - `conda install --override-channels -c conda-forge jupyter` (re-run
+      Notebook)
+    - `conda install --override-channels -c conda-forge netcdf4` (read/write
+      NetCDF4 test data)
+    - `conda install --override-channels -c conda-forge xarray` (read/write
+      NetCDF4 test data easily
+    - `conda install --override-channels -c conda-forge json_tricks` (slow, but
+      portable, ASCII-based data serialization)
+    - `conda install --override-channels -c conda-forge ffmpeg`
+    - `pip install spacepy` (read/write NASA CDF files; requires [NASA's common
+      data format (CDF) library] [9] to be installed and configured)
+3. install geomag-imp using the setup.py file in the top folder of this package:
   - `python setup.py install`
-6. Finally, while not strictly necessary, it is recommended that you install
-   software for handling NASA's common data format (CDF):
-  - [NASA's CDF library] [9]
-  - Los Alamos National Lab's SpacePy (`pip install spacepy`)  
-    (NOTE: The most recent version of SpacePy is difficult to install on  
-      Windows, requiring a no-longer-standard 32-bit Python installation,  
-      32-bit CDF library, 32-bit MINGW compilers, and a variety of other  
-      tweaks. We do not officially support Windows at this time)
+
 
 
 # Usage
