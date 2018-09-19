@@ -80,10 +80,10 @@ if __name__ == "__main__":
    # if custom interval is required, modify the following lines to override the
    # realtime interval calcualted from min_obs_age and every_nth, otherwise set
    # starttime and endtime equal to None
-   starttime = UTCDateTime(2017,1,1,0,0,0)
-   endtime = UTCDateTime(2017,1,1,1,0,0)
-   # starttime = None
-   # endtime = None
+   # starttime = UTCDateTime(2018,8,1,0,0,0)
+   # endtime = UTCDateTime(2018,8,1,1,0,0)
+   starttime = None
+   endtime = None
 
    # output formatting
    write_CDF = False
@@ -285,8 +285,9 @@ if __name__ == "__main__":
          obs_sigma_Bt_Bp_Br = obs_sigma_Btheta_Bphi_Br[tidx]
 
 
-      # fit the observed data
-      imp.fit(obs_lat_lon_r, obs_Bt_Bp_Br,
+      # fit the observed data (NaNs are converted to zero, but these should
+      #  be ignored because the corresponding sigmas are infinite)
+      imp.fit(obs_lat_lon_r, np.nan_to_num(obs_Bt_Bp_Br),
               sigma_Btheta_Bphi_Br = obs_sigma_Bt_Bp_Br)
 
       # interpolate to prediction grid

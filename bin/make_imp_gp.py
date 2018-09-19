@@ -77,10 +77,10 @@ if __name__ == "__main__":
    # if custom interval is required, modify the following lines to override the
    # realtime interval calcualted from min_obs_age and every_nth, otherwise set
    # starttime and endtime equal to None
-   starttime = UTCDateTime(2017,1,19,9,0,0)
-   endtime = UTCDateTime(2017,1,19,12,0,0)
-   # starttime = None
-   # endtime = None
+   # starttime = UTCDateTime(2018,8,1,0,0,0)
+   # endtime = UTCDateTime(2018,8,1,1,0,0)
+   starttime = None
+   endtime = None
 
    # output formatting
    write_CDF = False
