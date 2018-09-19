@@ -539,8 +539,8 @@ def write_imp_ASCII(DT, lat_lon_r, BX, BY, BZ, Label,
    """
 
    # unpack former tuple arguments (see PEP-3113)
-   Latitude, Longitud, Radius = lat_lon_r
-   ObsLat, ObsLon, ObsRad = olat_olon_or
+   Lat, Lon, Rad = lat_lon_r
+   obsLat, obsLon, obsRad = olat_olon_or
 
    # create a temporary directory
    tmpDir = tempfile.mkdtemp()
