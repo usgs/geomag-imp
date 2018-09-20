@@ -21,6 +21,7 @@ This script does NOT:
   is handled by make_impmaps.py)
 
 """
+from __future__ import print_function
 import numpy as np
 from glob import glob
 
@@ -200,11 +201,11 @@ if __name__ == "__main__":
       )
 
       if dist_stream.count() == 0 or sq_stream.count() == 0:
-         print ob, 'data could not be read; skipping...'
+         print(ob, 'data could not be read; skipping...')
          badObs.append(ob) # remove bad iagaCodes after for-loop
          continue
       else:
-         print ob, 'data read in successfully'
+         print(ob, 'data read in successfully')
 
       dist_X = dist_stream.select(channel="Xdt")[0]
       dist_Y = dist_stream.select(channel="Ydt")[0]

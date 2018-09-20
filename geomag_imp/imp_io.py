@@ -23,7 +23,6 @@ NOTES:
 import numpy as np
 import pkgutil
 import io
-#from StringIO import StringIO # not in Py3...io.BytesIO is preferred fix below
 import gzip
 import zipfile
 import tempfile
@@ -594,7 +593,7 @@ def _read_antti_datetime(dt_file):
    else:
       ff = open(dt_file, 'r')
 
-   sIO = io.BytesIO(ff.read())
+   sIO = io.BytesIO(ff.read().encode())
    ff.close()
 
    ymdHMS = np.genfromtxt(sIO, comments="%")
@@ -650,7 +649,7 @@ def _read_antti_component(component_file):
    else:
       ff = open(component_file, 'r')
 
-   sIO = io.BytesIO(ff.read())
+   sIO = io.BytesIO(ff.read().encode())
    ff.close()
 
    # read array
@@ -709,15 +708,15 @@ def _read_antti_location(location_file):
    else:
       ff = open(location_file, 'r')
 
-   sIO = io.BytesIO(ff.read())
+   sIO = io.BytesIO(ff.read().encode())
    ff.close()
 
    # read LatLon array (with optional labels...
    #  either all have labels, or none, else genfromtxt() chokes)
-   lll = zip(*np.atleast_1d(np.genfromtxt(
+   lll = list(zip(*np.atleast_1d(np.genfromtxt(
       sIO, comments="%", dtype=None,
       names=['latReal','lonReal','radReal','labelString']
-   )))
+   ))))
 
    # handles older style(s) with no radius and/or labels
    if len(lll) > 3:
@@ -725,7 +724,7 @@ def _read_antti_location(location_file):
       label = np.array(lll[3])
    elif len(lll) > 2:
       lat, lon, rad = np.array(lll[0:3])
-      if isinstance(rad[0], basestring):
+      if isinstance(rad[0], (str, bytes)):
          label = rad
          rad = np.ones(lat.shape)
       else:
@@ -783,7 +782,7 @@ def _read_antti_stations(station_file):
    else:
       ff = open(station_file, 'r')
 
-   sIO = io.BytesIO(ff.read())
+   sIO = io.BytesIO(ff.read().encode())
    ff.close()
 
    # extract and convert single line with observatory IDs
@@ -794,11 +793,11 @@ def _read_antti_stations(station_file):
    nLL = 0
    nInc = 0
    for line in sIO:
-      if re.search("^%", line):
+      if re.search(b"^%", line):
          # skip comments
          continue
 
-      if re.search(r"^\s*$", line):
+      if re.search(br"^\s*$", line):
          # skip blank lines
          continue
 
@@ -806,20 +805,20 @@ def _read_antti_stations(station_file):
       # observatory IDs for observatories considered in this solution; convert
       # to a list of strings
       if len(obsList) == 0:
-         obsList =  re.sub('\'', '', line).split()
+         obsList =  re.sub(b'\'', b'', line).split()
          nObs = len(obsList)
          continue
 
       # assume next nobs lines read are observatory locations
       if nLL < nObs:
-         llList.append([float(elem) for elem in line.split()])
+         llList.append([float(elem) for elem in line.decode().split()])
          nLL = nLL+1
          continue
 
       # assume next nobs lines read are observatory inclusion (boolean) lists
       if nInc < nObs:
          #incList.append(line.strip())
-         incList.append([int(elem) for elem in line.strip()])
+         incList.append([int(elem) for elem in line.decode().strip()])
          nInc = nInc+1
          continue
 
@@ -827,14 +826,14 @@ def _read_antti_stations(station_file):
    sIO.close()
 
    if len(llList) > 2:
-      obsLat, obsLon, obsRad = zip(*llList)
+      obsLat, obsLon, obsRad = list(zip(*llList))
    elif len(llList) == 2:
-      obsLat, obsLon = zip(*llList)
+      obsLat, obsLon = list(zip(*llList))
       obsRad = np.ones(obsLat.shape)
    else:
       raise Exception('Requires (at least) latitude and longitude')
 
-   obsInc = zip(*incList)
+   obsInc = list(zip(*incList))
 
    return (np.array(obsLat), np.array(obsLon), np.array(obsRad),
            np.array(obsInc), np.array(obsList))
