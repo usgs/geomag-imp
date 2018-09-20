@@ -15,6 +15,7 @@ This script does:
 # import Pyplot module
 # NOTE: matplotlib.use('Agg') is necessary to plot when no X environment is
 #       available, like when running as a cron job
+from __future__ import print_function
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -181,7 +182,7 @@ if __name__ == "__main__":
 
       for i,ut in enumerate(UTs):
 
-         print 'Plotting '+ut.isoformat()
+         print('Plotting '+ut.isoformat())
          sys.stdout.flush()
 
 
@@ -263,8 +264,8 @@ if __name__ == "__main__":
              # change only the offsets, after transforming to the map projection
              x,y = bm(ObsLons, ObsLats)
 
-             s_avail.set_offsets(np.array(zip(x,y))[ObsFits[i].astype(bool)])
-             s_miss.set_offsets(np.array(zip(x,y))[~ObsFits[i].astype(bool)])
+             s_avail.set_offsets(np.array(list(zip(x,y)))[ObsFits[i].astype(bool)])
+             s_miss.set_offsets(np.array(list(zip(x,y)))[~ObsFits[i].astype(bool)])
 
              # place observation vectors over top green dots
              u,v,x,y = bm.rotate_vector(ObsYs[i] * ObsMs[i], ObsXs[i] * ObsMs[i],
