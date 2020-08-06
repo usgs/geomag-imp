@@ -9,6 +9,6 @@ build/
 
 # data folder is intended as scratch space for running scripts, so results
 # should not be tracked; the run_me.sh script, however, should be tracked.
-data/
+/data/*
 !data/run_me.sh
 !data/run_me_gp.sh
