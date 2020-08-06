@@ -31,7 +31,7 @@ This script does NOT:
 NOTES:
 
 """
-from __future__ import print_function
+
 import numpy as np
 from glob import glob
 import sys
@@ -137,10 +137,10 @@ if __name__ == "__main__":
    # if custom interval is required, modify the following lines to override the
    # realtime interval calcualted from min_obs_age and every_nth_sec, otherwise
    # set starttime and endtime equal to None
-   #starttime = UTCDateTime(2018,8,1,0,0,0)
-   #endtime = UTCDateTime(2018,8,1,1,0,0)
-   starttime = None
-   endtime = None
+   starttime = UTCDateTime(2020,4,20,9,0,0)
+   endtime = UTCDateTime(2020,4,20,12,0,0)
+   #starttime = None
+   #endtime = None
 
    #
    #
@@ -237,7 +237,7 @@ if __name__ == "__main__":
                host = edge_url,
                port = edge_port,
                interval = 'minute',
-               type = 'variation'
+               type = 'adjusted'
             )
             in_stream += in_factory.get_timeseries(
                starttime = in_start,

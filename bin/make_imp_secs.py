@@ -21,7 +21,7 @@ This script does NOT:
   is handled by make_impmaps.py)
 
 """
-from __future__ import print_function
+
 import numpy as np
 from glob import glob
 
@@ -52,6 +52,7 @@ if __name__ == "__main__":
 
    # epsilon for truncated SVD
    epsilon = 0.05
+   # epsilon = 16
 
    # grid for predictions
    pred_lat = (20,80,2) # min/max pair for prediction latitudes
@@ -81,10 +82,10 @@ if __name__ == "__main__":
    # if custom interval is required, modify the following lines to override the
    # realtime interval calcualted from min_obs_age and every_nth, otherwise set
    # starttime and endtime equal to None
-   # starttime = UTCDateTime(2018,8,1,0,0,0)
-   # endtime = UTCDateTime(2018,8,1,1,0,0)
-   starttime = None
-   endtime = None
+   starttime = UTCDateTime(2020,4,20,10,0,0)
+   endtime = UTCDateTime(2020,4,20,10,10,0)
+   #starttime = None
+   #endtime = None
 
    # output formatting
    write_CDF = False
@@ -106,9 +107,9 @@ if __name__ == "__main__":
    # construct SECS grid
    lat_tmp, lon_tmp, r_tmp = np.meshgrid(
       np.linspace(secs_lat[0], secs_lat[1],
-                  (secs_lat[1] - secs_lat[0]) / secs_lat[2] + 1),
+                  (secs_lat[1] - secs_lat[0]) // secs_lat[2] + 1),
       np.linspace(secs_lon[0], secs_lon[1],
-                  (secs_lon[1] - secs_lon[0]) / secs_lon[2] + 1),
+                  (secs_lon[1] - secs_lon[0]) // secs_lon[2] + 1),
       Re+Hi,
       indexing='ij'
    )
@@ -121,9 +122,9 @@ if __name__ == "__main__":
    # construct prediction grid
    lat_tmp, lon_tmp, r_tmp = np.meshgrid(
       np.linspace(pred_lat[0], pred_lat[1],
-                  (pred_lat[1] - pred_lat[0]) / pred_lat[2] + 1),
+                  (pred_lat[1] - pred_lat[0]) // pred_lat[2] + 1),
       np.linspace(pred_lon[0], pred_lon[1],
-                  (pred_lon[1] - pred_lon[0]) / pred_lon[2] + 1),
+                  (pred_lon[1] - pred_lon[0]) // pred_lon[2] + 1),
       Re,
       indexing='ij'
    )
