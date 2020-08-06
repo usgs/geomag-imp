@@ -11,3 +11,4 @@ build/
 # should not be tracked; the run_me.sh script, however, should be tracked.
 data/
 !data/run_me.sh
+!data/run_me_gp.sh
