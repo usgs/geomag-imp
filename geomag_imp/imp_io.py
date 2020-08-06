@@ -36,15 +36,15 @@ import datetime as dt
 # issue warnings if these are not available, but don't fail immediately
 if pkgutil.find_loader('spacepy') is None or \
         pkgutil.find_loader('spacepy.pycdf') is None:
-   print ("spacepy.pycdf package not available; " +
-          "cannot import/export CDF files")
+   print(("spacepy.pycdf package not available; " +
+          "cannot import/export CDF files"))
 else:
    from spacepy import pycdf
 
 
 if pkgutil.find_loader('json_tricks') is None:
-   print ("JSON Tricks package not available; " +
-          "cannot import/export JSON files")
+   print(("JSON Tricks package not available; " +
+          "cannot import/export JSON files"))
 else:
    import json_tricks.np as json_t
 
