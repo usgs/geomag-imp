@@ -323,7 +323,20 @@ class secsRegressor(BaseEstimator, RegressorMixin):
       #       potential future uses other than just inverting for secs_,
       #       while VWU...not so much.
       self.obs_Btheta_Bphi_Br_ = Btheta_Bphi_Br
-      kk = self.S_ < self.epsilon * self.S_.max()
+      
+      if self.epsilon >= 1:
+         # retain the first int(epsilon) singular values
+         kk = np.arange(self.S_.size) > (self.epsilon - 1)
+      elif self.epsilon < 1 and self.epsilon >= 0:
+         # retain singular values greater than epsilon*S_.max()
+         kk = self.S_ < self.epsilon * self.S_.max()
+      elif self.epsilon < 0 and self.epsilon > -1:
+         # retain singular values less than -epsilon*S_.max()
+         kk = self.S_ > -self.epsilon * self.S_.max()
+      else:
+         # retain the last int(-epsilon) singular values
+         kk = np.arange(self.S_.size) <= (-1 * self.epsilon - 1)
+      
       self.S_[kk] = 0.
       S_ = self.S_.copy() # preserve self.S_ without Infs
       S_[kk] = np.inf # temporarily set singular values to Inf
