@@ -35,12 +35,12 @@ Continuum Analytics (http://conda.pydata.org/miniconda.html).
 1. install **Miniconda** distribution for your operating system, and set up a
    pristine Conda environment using (mostly) the conda-forge channel:
   - conda config --add channels conda-forge
-  - conda create -n G-IMP_env python
+  - conda create -n G-IMP_env python=3
   - conda activate G-IMP_env
 2. install most Python packages (and dependencies) using `conda` command:  
    (`--override-channels` option forces conda to only install from specified
-    channel(s); this works around a problem is not-very-older conda versions);
-    some packages must use `pip`
+    channel(s); this works around a problem in not-very-older conda versions);
+    some packages must be installed using `pip`
   - Minimum requirements:
     - `conda install --override-channels -c conda-forge obspy` (includes many
       other dependencies)
@@ -48,8 +48,8 @@ Continuum Analytics (http://conda.pydata.org/miniconda.html).
       geomag-algorithms; not in conda-forge)
     - `conda install --override-channels -c conda-forge scikit-learn` (required
       for Gaussian Process Regression)
-    - `conda install --override-channels -c conda-forge basemap` (required for
-      diagnostic plots)
+    - `conda install --override-channels -c conda-forge cartopy` (required for
+      test and diagnostic plots)
     - `pip install git+https://github.com/usgs/geomag-algorithms.git` (required
        for working with USGS geomagnetic data and services)
   - Extras:
@@ -64,8 +64,12 @@ Continuum Analytics (http://conda.pydata.org/miniconda.html).
     - `conda install --override-channels -c conda-forge ffmpeg`
     - `pip install spacepy` (read/write NASA CDF files; requires [NASA's common
       data format (CDF) library] [9] to be installed and configured)
-3. install geomag-imp using the setup.py file in the top folder of this package:
+3. clone, then install geomag-imp using the setup.py file in the top folder of 
+   this package:
+  - `git clone git@github.com:usgs/geomag-imp.git`
+  - `cd geomag-imp`
   - `python setup.py install`
+  (can also just add the geomag-imp folder to $PYTHONPATH)
 
 
 

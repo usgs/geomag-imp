@@ -126,7 +126,8 @@ if __name__ == "__main__":
 
    # state file base (Observatory code and channel will be appended to this)
    state_dir = 'PriorState/'
-   state_file = 'SvSqDistState'
+   # state_file = 'SvSqDistState'
+   state_file = None
 
    # The following define an allowed minimum age for requested data, and a set
    # of discrete times (within a day) at which endtime may fall. Actual endtime
@@ -194,8 +195,11 @@ if __name__ == "__main__":
       # loop over channels to retrieve input data for SqDistAlgorithm
       for ch in channels:
 
-         sf = state_dir + state_file + '_' + ob + ch
-
+         if state_dir and state_file:
+            sf = state_dir + state_file + '_' + ob + ch
+         else:
+            sf = None
+            
          # create SqDistAlgorithm object
          svsqdist[ch] = SqDistAlgorithm(
             # non-default configuration parameters
