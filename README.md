@@ -27,9 +27,9 @@ packages like: [ObsPy][6], the USGS's [Geomag-Algorithms][7], and [SpacePy][8]
 
 # Installation
 
-To install Geomag-IMP, first be sure to have a modern version of Python properly
-installed on your computer. Any Python distribution should work, but we only
-provide instructions to get this up-and-running using Miniconda from
+To install Geomag-IMP, first be sure to have a modern version of Python (>=3) 
+properly installed on your computer. Any Python distribution should work, but
+instructions are only provided to get this up-and-running using Miniconda from
 Continuum Analytics (http://conda.pydata.org/miniconda.html).
 
 1. install **Miniconda** distribution for your operating system, and set up a
@@ -37,39 +37,34 @@ Continuum Analytics (http://conda.pydata.org/miniconda.html).
   - conda config --add channels conda-forge
   - conda create -n G-IMP_env python=3
   - conda activate G-IMP_env
-2. install most Python packages (and dependencies) using `conda` command:  
-   (`--override-channels` option forces conda to only install from specified
-    channel(s); this works around a problem in not-very-older conda versions);
-    some packages must be installed using `pip`
+2. install most Python packages (and their dependencies) using `conda` command:  
+   some packages must be installed using `pip`
   - Minimum requirements:
-    - `conda install --override-channels -c conda-forge obspy` (includes many
-      other dependencies)
-    - `conda install --no-deps pycurl libcurl libssh2` (required for
-      geomag-algorithms; not in conda-forge)
-    - `conda install --override-channels -c conda-forge scikit-learn` (required
-      for Gaussian Process Regression)
-    - `conda install --override-channels -c conda-forge cartopy` (required for
-      test and diagnostic plots)
+    - `conda install obspy` (with dependencies, required by geomag-algorithms)
+    - `conda install pycurl libcurl libssh2` (required for geomag-algorithms)
+    - `conda install scikit-learn` (required for Gaussian Process Regression)
+    - `conda install cartopy` (required for test and diagnostic plots)
     - `pip install git+https://github.com/usgs/geomag-algorithms.git` (required
        for working with USGS geomagnetic data and services)
   - Extras:
-    - `conda install --override-channels -c conda-forge jupyter` (re-run
-      Notebook)
-    - `conda install --override-channels -c conda-forge netcdf4` (read/write
-      NetCDF4 test data)
-    - `conda install --override-channels -c conda-forge xarray` (read/write
-      NetCDF4 test data easily
-    - `conda install --override-channels -c conda-forge json_tricks` (slow, but
-      portable, ASCII-based data serialization)
-    - `conda install --override-channels -c conda-forge ffmpeg`
-    - `pip install spacepy` (read/write NASA CDF files; requires [NASA's common
-      data format (CDF) library] [9] to be installed and configured)
+    - `conda install json_tricks` (robust data serialization for NumPy objects)
+    - `pip install spacepy` (moslty for the included pycdf module)
+       - requires [NASA's common data format (CDF) library][9] to be 
+         properly installed and configured
+       - spacepy can be tricky to install, but there are platform-specific
+         tricks; best to refer to [online docs][8]
+    - `conda install Jupyter` (needed re-run Notebook)
+       - `conda install netcdf4` (read/write NetCDF4 test data)
+       - `conda install xarray` (read/write NetCDF4 test data more easily
+       - `conda install ffmpeg` (generate animations in Notebook)<br/>
+         (the Notebook should be updated to use Cartopy; cells that generate
+          maps will fail unless obsolete [Basemap][13] package is installed)
 3. clone, then install geomag-imp using the setup.py file in the top folder of 
    this package:
   - `git clone git@github.com:usgs/geomag-imp.git`
   - `cd geomag-imp`
   - `python setup.py install`
-  (can also just add the geomag-imp folder to $PYTHONPATH)
+  <br/>(can also just add the geomag-imp folder to $PYTHONPATH)
 
 
 
@@ -184,8 +179,9 @@ unchanged will facilitate future diagnoses should anything go wrong.
 [5]: http://matplotlib.org/
 [6]: https://github.com/obspy/obspy/wiki
 [7]: https://github.com/usgs/geomag-algorithms
-[8]: https://sourceforge.net/projects/spacepy/
+[8]: https://spacepy.github.io/install.html
 [9]: http://cdaweb.gsfc.nasa.gov/pub/software/cdf/
 [10]: https://www.ngdc.noaa.gov/IAGA/vdat/IAGA2002/iaga2002format.html
 [11]: https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/gaussian_process/kernels.py
 [12]: https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/gaussian_process/gpr.py
+[13]: https://matplotlib.org/basemap/
