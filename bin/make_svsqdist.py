@@ -31,9 +31,11 @@ This script does NOT:
 NOTES:
 
 """
+
 import numpy as np
 from glob import glob
 import sys
+import os
 
 from obspy.core import UTCDateTime,Stream,Trace,Stats
 from geomagio.edge import EdgeFactory
@@ -124,7 +126,8 @@ if __name__ == "__main__":
 
    # state file base (Observatory code and channel will be appended to this)
    state_dir = 'PriorState/'
-   state_file = 'SvSqDistState'
+   # state_file = 'SvSqDistState'
+   state_file = None
 
    # The following define an allowed minimum age for requested data, and a set
    # of discrete times (within a day) at which endtime may fall. Actual endtime
@@ -135,16 +138,34 @@ if __name__ == "__main__":
    # if custom interval is required, modify the following lines to override the
    # realtime interval calcualted from min_obs_age and every_nth_sec, otherwise
    # set starttime and endtime equal to None
-   starttime = UTCDateTime(2017,1,1,0,0,0)
-   endtime = UTCDateTime(2017,1,1,1,0,0)
-   # starttime = None
-   # endtime = None
+   starttime = UTCDateTime(2020,4,20,9,0,0)
+   endtime = UTCDateTime(2020,4,20,12,0,0)
+   #starttime = None
+   #endtime = None
 
    #
    #
    # No more configuration parameters below this point
    #
    #
+
+   # create folders for downloads and output if they don't exist already
+   # (function catches race condition if path is created after check)
+   def mkdirp(path):
+       import os
+       try:
+           os.makedirs(path)
+       except OSError:
+           if not os.path.isdir(path):
+               raise
+
+   mkdirp(data_dir)
+   mkdirp(obs_dir)
+   mkdirp(dist_dir)
+   mkdirp(sq_dir)
+   mkdirp(sv_dir)
+   mkdirp(sd_dir)
+   mkdirp(state_dir)
 
    # IAGA observatory codes are the only allowed command-line inputs, so no
    # need for fancy argument parsing
@@ -157,7 +178,7 @@ if __name__ == "__main__":
    now = UTCDateTime.now() - min_obs_age
    nsec = now.hour*3600 + now.minute*60 + now.second + now.microsecond*1e-6
    delta = (nsec // every_nth_sec) * every_nth_sec - nsec
-   out_end = now + delta
+   end_now = now + delta
 
    # loop over iagaCodes to process each observatory
    for ob in iagaCodes:
@@ -174,8 +195,11 @@ if __name__ == "__main__":
       # loop over channels to retrieve input data for SqDistAlgorithm
       for ch in channels:
 
-         sf = state_dir + state_file + '_' + ob + ch
-
+         if state_dir and state_file:
+            sf = state_dir + state_file + '_' + ob + ch
+         else:
+            sf = None
+            
          # create SqDistAlgorithm object
          svsqdist[ch] = SqDistAlgorithm(
             # non-default configuration parameters
@@ -192,32 +216,32 @@ if __name__ == "__main__":
          svsqdist[ch].load_state()
 
          # set out_start to the next_starttime if it exists
-         if svsqdist[ch].next_starttime is not None:
+         out_start = end_now
+         out_end = end_now
+         if (svsqdist[ch].next_starttime is not None and
+             starttime is None and endtime is None):
             out_start = svsqdist[ch].next_starttime
          else:
-            out_start = out_end
-            # override with custom starttime and endtime
-            if (starttime is not None and endtime is not None):
+            if starttime is not None:
                out_start = starttime
-               out_end = endtime
-            elif starttime is not None:
-               out_start = starttime
+            if endtime is not None:
+                out_end = endtime
 
-         # possibly re-initialize with previous 90 days of data
-         in_start, in_end = svsqdist[ch].get_input_interval(
-            out_start,
-            out_end,
-            observatory = ob,
-            channels = ch
-         )
+         if out_start <= out_end:
+            # possibly re-initialize with previous 90 days of data
+            in_start, in_end = svsqdist[ch].get_input_interval(
+               out_start,
+               out_end,
+               observatory = ob,
+               channels = ch
+            )
 
-         if in_start <= in_end:
             # create factory and pull data from USGS Edge
             in_factory = EdgeFactory(
                host = edge_url,
                port = edge_port,
                interval = 'minute',
-               type = 'variation'
+               type = 'adjusted'
             )
             in_stream += in_factory.get_timeseries(
                starttime = in_start,
@@ -225,17 +249,17 @@ if __name__ == "__main__":
                observatory = ob,
                channels = ch
             )
-            print 'Retreived from Edge: %s-%s'%(ob,ch),
-            print 'from', in_start, 'to', in_end
+            print('Retrieved from Edge: %s-%s'%(ob,ch), end="")
+            print(' from', in_start, 'to', in_end)
          else:
-            print "Non-monotonic interval requested (",
-            print in_start, 'to', in_end, ")",
-            print "skipping %s-%s..."%(ob,ch)
+            print("Decreasing interval requested (", end="")
+            print(out_start, 'to', out_end, ")", end="")
+            print(" skipping %s-%s..."%(ob,ch))
 
 
       if in_stream.count() is not len(channels):
          # if any channel was not read in, STOP PROCESSING
-         print "No inputs processed or written..."
+         print("No inputs processed or written...")
          pass
 
       else:

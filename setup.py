@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
    name='geomag-imp',
-   version='0.0.0',
+   version='1.0.0',
    description='USGS Geomag Interpolated Magnetic Perturbations',
    url='https://github.com/usgs/geomag-imp',
    packages=[
@@ -11,8 +11,9 @@ setup(
    install_requires=[
       'numpy',
       'matplotlib',
-	   'basemap',
+	   'cartopy',
       'scipy',
+      'scikit-learn',
       'obspy',
 	   'geomag-algorithms',
       'spacepy',
