@@ -1,7 +1,9 @@
 """
 The GIMP Module provides tools for gridded interpolated magnetic field maps.
 """
-import imp_io # read/write data from/to gimp data files
+
+
+from . import imp_io # read/write data from/to gimp data files
 from .secs import secs # spherical elementary current system class
 from .secs import secsRegressor # SECS regressor class
 from sklearn.gaussian_process import kernels as gpKernels

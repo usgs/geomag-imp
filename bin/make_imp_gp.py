@@ -21,12 +21,12 @@ This script does NOT:
   is handled by make_impmaps.py)
 
 """
+
 import numpy as np
 from glob import glob
 
-# import Basemap to convert lat/lon into nearly mostly equi-distant coordinates
-from mpl_toolkits.basemap import Basemap
-
+# import Cartopy coordinate reference system class
+import cartopy.crs as ccrs
 
 from obspy.core import UTCDateTime,Stream,Trace,Stats
 #from geomagio.edge import EdgeFactory
@@ -77,8 +77,8 @@ if __name__ == "__main__":
    # if custom interval is required, modify the following lines to override the
    # realtime interval calcualted from min_obs_age and every_nth, otherwise set
    # starttime and endtime equal to None
-   starttime = UTCDateTime(2017,1,19,9,0,0)
-   endtime = UTCDateTime(2017,1,19,12,0,0)
+   starttime = UTCDateTime(2020,4,20,10,0,0)
+   endtime = UTCDateTime(2020,4,20,10,10,0)
    # starttime = None
    # endtime = None
 
@@ -101,9 +101,9 @@ if __name__ == "__main__":
    # construct prediction grid
    lat_tmp, lon_tmp, r_tmp = np.meshgrid(
       np.linspace(pred_lat[0], pred_lat[1],
-                  (pred_lat[1] - pred_lat[0]) / pred_lat[2] + 1),
+                  (pred_lat[1] - pred_lat[0]) // pred_lat[2] + 1),
       np.linspace(pred_lon[0], pred_lon[1],
-                  (pred_lon[1] - pred_lon[0]) / pred_lon[2] + 1),
+                  (pred_lon[1] - pred_lon[0]) // pred_lon[2] + 1),
       Re,
       indexing='ij'
    )
@@ -181,11 +181,11 @@ if __name__ == "__main__":
       )
 
       if dist_stream.count() == 0 or sq_stream.count() == 0:
-         print ob, 'data could not be read; skipping...'
+         print(ob, 'data could not be read; skipping...')
          badObs.append(ob) # remove bad iagaCodes after for-loop
          continue
       else:
-         print ob, 'data read in successfully'
+         print(ob, 'data read in successfully')
 
       dist_X = dist_stream.select(channel="Xdt")[0]
       dist_Y = dist_stream.select(channel="Ydt")[0]
@@ -239,7 +239,7 @@ if __name__ == "__main__":
    obs_sigma_Btheta_Bphi_Br = np.transpose(obs_sigma_Btheta_Bphi_Br, (2,0,1))
 
    # initialize the gpKernel and gpRegressor
-   # (Lambert Azimuthal map projection below requires length scales in meters)
+   # (Lambert Conformal map projection below requires length scales in meters)
    # (force a ~1000 km length scale, with a 1 nT sigma on all observations)
    kernel = gpKernels.RBF(length_scale=1e6, length_scale_bounds=(1e6, 1e6))
    imp = gpRegressor(kernel = kernel, alpha = 1e-9)
@@ -247,23 +247,33 @@ if __name__ == "__main__":
    # We convert latitudes and longitudes to a more "Cartesian" grid so that
    # pairwise distances (pdist) are closer to actual distances in meters. We
    # do NOT transform the vectors, or actually interpolate on the modified grid.
-   # The Lambert Azimuthal projection is arbitrary, but works well enough for
+   # The Lambert Conformal projection is arbitrary, but works well enough for
    # spherical segments that are roughly the solid-angle area of North America.
 
-   # set up a Lambert Azimuthal equal area basemap for North America
-   mapH = 6000000 # encompasses most of N.A., South to North, in ~meters
-   mapW = 10000000 # encompasses all of N.A., East to West, and HON, in ~meters
+   # set up a Lambert Conformal projection for for North America   
    lon_0 = 250. # central longitude
    lat_0 = 50.  # central latitude
-   lat_ts = lat_0 # latitude of "true scale"
+   
+   proj_data = ccrs.PlateCarree()
+   projection = ccrs.LambertConformal(
+      central_latitude=lat_0, 
+      central_longitude=lon_0
+   )
 
-   bm = Basemap(width = mapW, height = mapH,
-                resolution = 'l', projection = 'laea',
-                lat_ts = lat_ts, lat_0 = lat_0, lon_0 = lon_0)
-
-   obsX, obsY = bm(obs_lat_lon_r[:,1], obs_lat_lon_r[:,0])
-   predX, predY = bm(pred_lat_lon_r[:,1], pred_lat_lon_r[:,0])
-
+   obsXYZ = projection.transform_points(
+      proj_data,
+      obs_lat_lon_r[:,1], obs_lat_lon_r[:,0], obs_lat_lon_r[:,2]
+   )
+   obsX = obsXYZ[:,0]
+   obsY = obsXYZ[:,1]
+   
+   predXYZ = projection.transform_points(
+      proj_data,
+      pred_lat_lon_r[:,1], pred_lat_lon_r[:,0], pred_lat_lon_r[:,2]
+   )
+   predX = predXYZ[:,0]
+   predY = predXYZ[:,1]
+   
    # Finally, generate a map for each time step
    X = []
    Y = []
