@@ -522,11 +522,11 @@ class secsRegressor(BaseEstimator, RegressorMixin):
       - We do not implement the much simpler "Cartesian" case here because:
         1) it is unlikely we will ever use it; and
         2) if we do use it, we should create a new class
-      - This function borrows heavily from Greg Lucas' elegant pysecs package 
-        (https://github.com/greglucas/pysecs), with the author's permission, 
+      - This function borrows heavily from Greg Lucas' elegant pysecs package
+        (https://github.com/greglucas/pysecs), with the author's permission,
         of course. The only reason we did not simply "wrap" pysecs' secs class
         is the pysecs API was not easily adapted to resemble scikit-learn's
-        Gaussian Process Regressor (GPR) class...in hindsight, it is not clear 
+        Gaussian Process Regressor (GPR) class...in hindsight, it is not clear
         that this was a particularly useful API to emulate, but to drop it now
         would break backward compatibility for Geomag-IMP.
       """

@@ -63,7 +63,7 @@ def test_predict_sec_above():
    '''
    Test SEC prediction at fixed locations relative to pole of SECS above ground
    '''
-   # place SEC at north pole, 0 latitude, and 100 km altitude
+   # place SEC at north pole, 0 longitude, and 100 km altitude
    lats = np.array([90])
    lons = np.array([0])
    rads = np.array([6378000. + 100000.])
@@ -106,11 +106,63 @@ def test_predict_sec_above():
    assert_approx_equal(pred[1,2], Brad0, significant=9)
 
 
+def test_predict_sec_above_Bphis():
+   '''
+   Test SEC prediction at fixed locations relative to pole of SECS above ground;
+   this test actually checks the phi (longitudinal) vector component
+   '''
+   # place SEC at equator, 0 longitude, and 100 km altitude
+   lats = np.array([0])
+   lons = np.array([0])
+   rads = np.array([6378000. + 100000.])
+   secs_llr = np.array(list(zip(lats, lons, rads)))
+
+   # initialize secs object
+   sec_above = secs(secs_llr, amps=None, amps_var=None)
+
+   # initialize secsRegressor object
+   epsilon = 0.1
+   secsR = secsRegressor(sec_above, epsilon)
+
+   # predict magnetic disturbance at equator, but 90 degrees east and west
+   # of pole position; these are where the theta component caculated in the
+   # SEC frame will equal the negative of the phi component in geographic
+   # coordinates
+   latp = np.array([0,0])
+   lonp = np.array([-90,90])
+   radp = np.array([6378000., 6378000.])
+   pred_llr = np.array(list(zip(latp, lonp, radp)))
+
+   # set SEC amplitude to 10,000 Amps, and make prediction
+   amps = 1e4
+   pred = secsR.predict(pred_llr, amps)
+
+   # calculate exact solution using relationships found in Pulkinnen et al.'s
+   # 2003 Earth Planets Space article "Separation of the geomagnetic variation
+   # field on the ground into external and internal parts using the elementary
+   # current system method"
+   mu0 = 4 * np.pi * 1e-7 # N / A^2
+   Btheta90 = -(mu0 * amps) / (4. * np.pi * radp[0] *
+                               np.sin((lonp[0] - lons[0]) * np.pi/180.)) * \
+      (((radp[0]/rads[0]) - np.cos((lonp[0] - lons[0]) * np.pi/180.)) / \
+       np.sqrt(1 - (2. * radp[0] * np.cos((lonp[0] - lons[0]) * np.pi/180.)) / \
+               rads[0] + (radp[0]/rads[0])**2) + \
+       np.cos((lonp[0] - lons[0]) * np.pi/180.) )
+   Bphi90minus = -Btheta90
+   Bphi90plus = Btheta90
+
+   print(pred[0,1], Bphi90minus)
+   print(pred[1,1], Bphi90plus)
+
+   assert_approx_equal(pred[0,1], Bphi90minus, significant=9)
+   assert_approx_equal(pred[1,1], Bphi90plus, significant=9)
+
+
 def test_predict_sec_below():
    '''
    Test SEC prediction at fixed locations relative to pole of SECS below ground
    '''
-   # place SEC at north pole, 0 latitude, and 100 km altitude
+   # place SEC at north pole, 0 longitude, and 100 km altitude
    lats = np.array([90])
    lons = np.array([0])
    rads = np.array([6378000. - 100000.])
@@ -156,7 +208,7 @@ def test_predict_sec_above_below():
    '''
    Test SEC prediction at fixed locations relative to pole of SECS below ground
    '''
-   # place SEC at north pole, 0 latitude, and 100 km altitude
+   # place SEC at north pole, 0 longitude, and 100 km altitude
    lats = np.array([90, 90])
    lons = np.array([0, 0])
    rads = np.array([6378000. + 100000., 6378000. - 100000.])
