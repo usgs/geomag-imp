@@ -1,9 +1,9 @@
 [
   {
-    "name": "Geomag IMP",
+    "name": "Geomag-IMP",
     "organization": "U.S. Geological Survey",
     "description": "Interpolates geomagnetic disturbance vectors",
-    "version": "v1.0.0",
+    "version": "1.0.0",
     "status": "Released",
 
     "permissions": {
@@ -42,7 +42,7 @@
     },
 
     "date": {
-      "metadataLastUpdated": "2020-08-06"
+      "metadataLastUpdated": "2020-08-18"
     }
   }
 ]
