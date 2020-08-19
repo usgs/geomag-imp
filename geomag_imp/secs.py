@@ -492,11 +492,15 @@ class secsRegressor(BaseEstimator, RegressorMixin):
 
 
    def make_T(self, lat_lon_r):
-      """create ecs_ transformation matrix
+      """create secs_ transformation matrix
 
-      This is the workhorse for the entire class. It is not easily optimized,
-      due to all the trigenometry involved, but for many real-world problems,
-      this matrix only needs to be generated once, then re-used many times.
+      This is the workhorse for the entire class. It is a vectorized version
+      of the equations first presented by Amm & Viljanen (1999) that exploits
+      the Python Numpy library's optimizations, and also attempts to minimize
+      the number of trigonometric calls. This was done to overcome performance
+      limitations encountered in the original Matlab algorithms. It has been
+      carefully validated against the original algorithms, which were used in
+      an earlier version of Geomag-IMP.
 
       Parameters
       ----------
@@ -518,146 +522,141 @@ class secsRegressor(BaseEstimator, RegressorMixin):
       - We do not implement the much simpler "Cartesian" case here because:
         1) it is unlikely we will ever use it; and
         2) if we do use it, we should create a new class
-      - A near direct translation of A. Pulkkinen's T.m Matlab function, this
-        code may seem very non-Pythonic in places (and not just zero-indexing).
+      - This function borrows heavily from Greg Lucas' elegant pysecs package 
+        (https://github.com/greglucas/pysecs), with the author's permission, 
+        of course. The only reason we did not simply "wrap" pysecs' secs class
+        is the pysecs API was not easily adapted to resemble scikit-learn's
+        Gaussian Process Regressor (GPR) class...in hindsight, it is not clear 
+        that this was a particularly useful API to emulate, but to drop it now
+        would break backward compatibility for Geomag-IMP.
       """
-      # much below relies on lat_lon_r being a NumPy array
-      lat_lon_r = np.array(lat_lon_r, copy=False)
 
-      # natural constant
-      myy0 = 4 * np.pi * 1e-7
-      fact = myy0 / (4 * np.pi)
+      nobs = len(lat_lon_r)
+      nsec = len(self.secs.lat_lon_r)
 
-      # allocate output array
-      T_out = np.zeros((lat_lon_r.size, self.secs.n_secs))
+      obs_r = lat_lon_r[:, 2][:, np.newaxis]
+      sec_r = self.secs.lat_lon_r[:, 2][np.newaxis, :]
 
-      # convert latitude to colatitude, and all angles to radians
-      # (force copy() because we actually modify some of these inputs, and
-      #  don't want these changes reflected in the external variables)
-      x1 = (90 - lat_lon_r[:,0].copy()) * np.pi/180.
-      x2 = lat_lon_r[:,1].copy() * np.pi/180.
-      x3 = lat_lon_r[:,2].copy()
+      theta = calc_angular_distance(lat_lon_r[:, :2], self.secs.lat_lon_r[:, :2])
+      alpha = calc_bearing(lat_lon_r[:, :2], self.secs.lat_lon_r[:, :2])
 
-      x10 = (90 - self.secs.lat_lon_r[:,0].copy()) * np.pi/180.
-      x20 = self.secs.lat_lon_r[:,1].copy() * np.pi/180.
-      x30 = self.secs.lat_lon_r[:,2].copy()
+      # magnetic permeability
+      mu0 = 4*np.pi*1e-7
 
-      # loop over secs
-      for n_el in range(self.secs.n_secs):
+      # simplify calculations by storing this ratio
+      x = obs_r/sec_r
 
-         theta = np.arccos(np.cos(x1) * np.cos(x10[n_el]) +
-                           np.sin(x1) * np.sin(x10[n_el]) *
-                           np.cos(x2 - x20[n_el]) )
+      sin_theta = np.sin(theta)
+      cos_theta = np.cos(theta)
+      factor = 1./np.sqrt(1 - 2*x*cos_theta + x**2)
 
-         # coordinate transformation to system where the pole is at theta=phi=0
-         # first, transform to the Cartesian coordinates with pole at ecs_llr
-         x = x30[n_el] * np.sin(x1) * np.cos(x2)
-         y = x30[n_el] * np.sin(x1) * np.sin(x2)
-         z = x30[n_el] * np.cos(x1)
+      # Amm & Viljanen: Equation 9
+      Br = mu0/(4*np.pi*obs_r) * (factor - 1)
 
-         # this because rotations are made keeping z- and x-ais constant, and
-         # we want that x-axis correspond to phi=0
+      # Amm & Viljanen: Equation 10 (transformed to try and eliminate trig 
+      #                              operations and divide by zeros)
+      Btheta = -mu0/(4*np.pi*obs_r) * (factor*(x - cos_theta) + cos_theta)
+      # If sin(theta) == 0: Btheta = 0
+      # There is a possible 0/0 in the expansion when sec_loc == obs_loc
+      Btheta = np.divide(Btheta, sin_theta, out=np.zeros_like(sin_theta),
+                        where=sin_theta != 0)
 
-         x20[n_el] = x20[n_el] - np.pi/2.
+      # When observation points radii are outside of the sec locations
+      under_locs = sec_r < obs_r
 
-         x_dot = ( x * np.cos(x20[n_el]) +
-                   y * np.sin(x20[n_el]) )
-         y_dot = (-x * np.cos(x10[n_el]) * np.sin(x20[n_el]) +
-                   y * np.cos(x10[n_el]) * np.cos(x20[n_el]) -
-                   z * np.sin(x10[n_el]) )
-         z_dot = (-x * np.sin(x10[n_el]) * np.sin(x20[n_el]) +
-                   y * np.sin(x10[n_el]) * np.cos(x20[n_el]) +
-                   z * np.cos(x10[n_el]) )
+      # NOTE: If any SECs are below observations the math will be done on all
+      #       points. This could be updated to only work on the locations where
+      #       this condition occurs, but would make the code messier, with 
+      #       minimal performance gain except for very large matrices.
+      if np.any(under_locs):
+         # Flipped from previous case
+         x = sec_r/obs_r
 
-         # the uniqueness problem of the phi_dot have to be dealt with
-         # arctan(0/0) is forced to 0
-         theta_dot = np.arccos(z_dot / np.sqrt(x_dot**2 + y_dot**2 + z_dot**2))
+         # Amm & Viljanen: Equation A.7
+         Br2 = mu0*x/(4*np.pi*obs_r) * (1./np.sqrt(1 - 2*x*cos_theta + x**2) - 1)
 
-         arg_tan = y_dot / x_dot
-         kk = y_dot == 0.
-         arg_tan[kk] = 0.
+         # Amm & Viljanen: Equation A.8
+         Btheta2 = - mu0 / (4*np.pi*obs_r) * ((obs_r-sec_r*cos_theta) /
+                                                np.sqrt(obs_r**2 -
+                                                      2*obs_r*sec_r*cos_theta +
+                                                      sec_r**2) - 1)
+         Btheta2 = np.divide(Btheta2, sin_theta, out=np.zeros_like(sin_theta),
+                              where=sin_theta != 0)
 
-         phi_dot = (np.arctan(arg_tan) +
-                    np.abs((np.sign(y_dot) - np.sign(x_dot) * np.sign(y_dot))) *
-                    np.pi/2.)
+         # Update only the locations where secs are under observations
+         Btheta[under_locs] = Btheta2[under_locs]
+         Br[under_locs] = Br2[under_locs]
 
-         # calculation of the magnetic field components
-         TX1_dot = np.zeros(x1.shape)
-         TX2_dot = np.zeros(x2.shape)
-         TX3_dot = np.zeros(x3.shape)
+      # Transform back to Bx, By, Bz at each local point
+      T = np.empty((nobs, 3, nsec))
+      # alpha == angle (from cartesian x-axis (By), going towards y-axis (Bx))
+      T[:, 0, :] = Btheta*np.sin(alpha)
+      T[:, 1, :] = Btheta*np.cos(alpha)
+      T[:, 2, :] = Br
+            
+      return T.reshape(nobs * 3, -1)
 
-         # first calculate for r<=r0
-         idx_s = x3 <= x30[n_el]
 
-         # r-component
-         TX1_dot[idx_s] = (fact * 1/x3[idx_s] *
-                           (1 / np.sqrt(1 - 2 * x3[idx_s] *
-                                            np.cos(theta_dot[idx_s]) /
-                                            x30[n_el] +
-                                        (x3[idx_s] / x30[n_el])**2) -
-                            1))
-         # poloidal component
-         TX2_dot[idx_s] = (-fact * 1 / (x3[idx_s] * np.sin(theta_dot[idx_s])) *
-                           ((x3[idx_s] / x30[n_el] - np.cos(theta_dot[idx_s])) /
-                            np.sqrt(1 - 2 * x3[idx_s] *
-                                        np.cos(theta_dot[idx_s]) /
-                                        x30[n_el] +
-                                    (x3[idx_s] / x30[n_el])**2) +
-                            np.cos(theta_dot[idx_s])))
+def calc_angular_distance(latlon1, latlon2):
+   """Calculate the angular distance between a set of points.
+   This function calculates the angular distance in radians
+   between any number of latitude and longitude points.
+   Parameters
+   ----------
+   latlon1 : ndarray (n x 2 [lat, lon])
+      An array of n (latitude, longitude) points.
+   latlon2 : ndarray (m x 2 [lat, lon])
+      An array of m (latitude, longitude) points.
+   Returns
+   -------
+   ndarray (n x m)
+      The array of distances between the input arrays.
+   """
+   lat1 = np.deg2rad(latlon1[:, 0])[:, np.newaxis]
+   lon1 = np.deg2rad(latlon1[:, 1])[:, np.newaxis]
+   lat2 = np.deg2rad(latlon2[:, 0])[np.newaxis, :]
+   lon2 = np.deg2rad(latlon2[:, 1])[np.newaxis, :]
 
-         # ...then calculate for r>r0
-         idx_f = x3 > x30[n_el]
-         # r-component
-         TX1_dot[idx_f] = (fact * x30[n_el]/x3[idx_f]**2 *
-                           (1 / np.sqrt(1 - 2 * x30[n_el] *
-                                            np.cos(theta_dot[idx_f]) /
-                                            x3[idx_f] +
-                                        (x30[n_el] / x3[idx_f])**2) -
-                            1))
-         # poloidal component
-         TX2_dot[idx_f] = (-fact * 1 / (x3[idx_f] * np.sin(theta_dot[idx_f])) *
-                           ((x3[idx_f] - x30[n_el] * np.cos(theta_dot[idx_f])) /
-                            np.sqrt(x3[idx_f]**2 - 2 * x3[idx_f] * x30[n_el] *
-                                                   np.cos(theta_dot[idx_f]) +
-                                    x30[n_el]**2) -
-                            1))
+   dlon = lon2 - lon1
 
-         # no toroidal component
-         TX3_dot = theta_dot * 0
+   # theta == angular distance between two points
+   theta = np.arccos(np.sin(lat1)*np.sin(lat2) +
+                     np.cos(lat1)*np.cos(lat2)*np.cos(dlon))
+   return theta
 
-         # singularities at the pole, TX2_dot is set to zero when theta_dot=0
-         kk = theta_dot==0
-         TX2_dot[kk] = 0
 
-         # transformation of the magnetic field to Cartesian components
-         TX_dot = (np.cos(phi_dot) * np.sin(theta_dot) * TX1_dot +
-                   np.cos(theta_dot) * np.cos(phi_dot) * TX2_dot)
-         TY_dot = (np.sin(phi_dot) * np.sin(theta_dot) * TX1_dot +
-                   np.cos(theta_dot) * np.sin(phi_dot) * TX2_dot)
-         TZ_dot =  np.cos(theta_dot) * TX1_dot - np.sin(theta_dot) * TX2_dot
+def calc_bearing(latlon1, latlon2):
+   """Calculate the bearing (direction) between a set of points.
+   This function calculates the bearing in radians
+   between any number of latitude and longitude points.
+   It is the direction from point 1 to point 2 going from the
+   cartesian x-axis towards the cartesian y-axis.
+   Parameters
+   ----------
+   latlon1 : ndarray (n x 2 [lat, lon])
+      An array of n (latitude, longitude) points.
+   latlon2 : ndarray (m x 2 [lat, lon])
+      An array of m (latitude, longitude) points.
+   Returns
+   -------
+   ndarray (n x m)
+      The array of bearings between the input arrays.
+   """
+   lat1 = np.deg2rad(latlon1[:, 0])[:, np.newaxis]
+   lon1 = np.deg2rad(latlon1[:, 1])[:, np.newaxis]
+   lat2 = np.deg2rad(latlon2[:, 0])[np.newaxis, :]
+   lon2 = np.deg2rad(latlon2[:, 1])[np.newaxis, :]
 
-         # transformation to the cartesian system having pole at theta=0, phi=0
-         TX = (np.cos(x20[n_el]) * TX_dot -
-               np.cos(x10[n_el]) * np.sin(x20[n_el]) * TY_dot -
-               np.sin(x10[n_el]) * np.sin(x20[n_el]) * TZ_dot)
-         TY = (np.sin(x20[n_el]) * TX_dot +
-               np.cos(x10[n_el]) * np.cos(x20[n_el]) * TY_dot +
-               np.sin(x10[n_el]) * np.cos(x20[n_el]) * TZ_dot)
-         TZ = -np.sin(x10[n_el]) * TY_dot + np.cos(x10[n_el]) * TZ_dot
+   dlon = lon2 - lon1
 
-         # transformation back to spherical coordinates
-         TX3 = (np.sin(x1) * np.cos(x2) * TX +
-                np.sin(x1) * np.sin(x2) * TY +
-                np.cos(x1) * TZ) # r-component
-         TX1 = (np.cos(x1) * np.cos(x2) * TX +
-                np.cos(x1) * np.sin(x2) * TY -
-                np.sin(x1) * TZ) # poloidal component
-         TX2 = -np.sin(x2) * TX + np.cos(x2) * TY # toroidal component
-
-         # construct output array
-         # (this differs from Pulkkinen's code, and is more like the literature)
-         T_out[0::3, n_el] = TX1
-         T_out[1::3, n_el] = TX2
-         T_out[2::3, n_el] = TX3
-
-      return T_out
+   # alpha == bearing, going from point1 to point2
+   #          angle (from cartesian x-axis (By), going towards y-axis (Bx))
+   # Used to rotate the SEC coordinate frame into the observation coordinate
+   # frame.
+   # SEC coordinates are: theta (colatitude (+ away from North Pole)),
+   #                      phi (longitude, + east), r (+ out)
+   # Obs coordinates are: X (+ north), Y (+ east), Z (+ down)
+   alpha = np.pi/2 - np.arctan2(np.sin(dlon)*np.cos(lat2),
+                              np.cos(lat1)*np.sin(lat2) -
+                              np.sin(lat1)*np.cos(lat2)*np.cos(dlon))
+   return alpha
