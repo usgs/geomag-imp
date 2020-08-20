@@ -648,13 +648,6 @@ def calc_bearing(latlon1, latlon2):
 
    dlon = lon2 - lon1
 
-   # alpha == bearing, going from point1 to point2
-   #          angle (from cartesian x-axis (By), going towards y-axis (Bx))
-   # Used to rotate the SEC coordinate frame into the observation coordinate
-   # frame.
-   # SEC coordinates are: theta (colatitude (+ away from North Pole)),
-   #                      phi (longitude, + east), r (+ out)
-   # Obs coordinates are: X (+ north), Y (+ east), Z (+ down)
    alpha = np.pi/2 - np.arctan2(np.sin(dlon)*np.cos(lat2),
                               np.cos(lat1)*np.sin(lat2) -
                               np.sin(lat1)*np.cos(lat2)*np.cos(dlon))
