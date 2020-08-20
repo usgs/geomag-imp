@@ -151,9 +151,6 @@ def test_predict_sec_above_Bphis():
    Bphi90minus = -Btheta90
    Bphi90plus = Btheta90
 
-   print(pred[0,1], Bphi90minus)
-   print(pred[1,1], Bphi90plus)
-
    assert_approx_equal(pred[0,1], Bphi90minus, significant=9)
    assert_approx_equal(pred[1,1], Bphi90plus, significant=9)
 
