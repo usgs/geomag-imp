@@ -587,13 +587,12 @@ class secsRegressor(BaseEstimator, RegressorMixin):
          Btheta[under_locs] = Btheta2[under_locs]
          Br[under_locs] = Br2[under_locs]
 
-      # Transform back to Bx, By, Bz at each local point
       T = np.empty((nobs, 3, nsec))
-      # alpha == angle (from cartesian x-axis (By), going towards y-axis (Bx))
       T[:, 0, :] = Btheta*np.sin(alpha)
       T[:, 1, :] = Btheta*np.cos(alpha)
       T[:, 2, :] = Br
-            
+      
+      # output expected to be 2D, not 3D
       return T.reshape(nobs * 3, -1)
 
 
