@@ -531,9 +531,6 @@ class secsRegressor(BaseEstimator, RegressorMixin):
         would break backward compatibility for Geomag-IMP.
       """
 
-      nobs = len(lat_lon_r)
-      nsec = len(self.secs.lat_lon_r)
-
       obs_r = lat_lon_r[:, 2][:, np.newaxis]
       sec_r = self.secs.lat_lon_r[:, 2][np.newaxis, :]
 
@@ -587,7 +584,8 @@ class secsRegressor(BaseEstimator, RegressorMixin):
          Btheta[under_locs] = Btheta2[under_locs]
          Br[under_locs] = Br2[under_locs]
 
-      T = np.empty((nobs, 3, nsec))
+      nobs = len(lat_lon_r)
+      T = np.empty((nobs, 3, self.secs.n_secs))
       T[:, 0, :] = Btheta*np.sin(alpha)
       T[:, 1, :] = Btheta*np.cos(alpha)
       T[:, 2, :] = Br
