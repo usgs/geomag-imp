@@ -1,6 +1,10 @@
 USGS Geomagnetism Program<br/>Interpolated Magnetic Perturbations (Geomag-IMP)
 ============================================================
 
+**This project has been migrated to https://code.usgs.gov/ghsc/geomag/geomag-imp,<br>**
+**no further updates will be applied on GitHub.**
+
+
 # Background
 
 Geomag-IMP is an open-source Python library for interpolating magnetic field
